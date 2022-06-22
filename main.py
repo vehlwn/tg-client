@@ -1,6 +1,8 @@
 import configparser
 import argparse
 import telethon
+import datetime
+import collections
 
 config = configparser.ConfigParser()
 config.read("api_id.ini")
@@ -53,7 +55,7 @@ async def get_located(lat, long):
             background=False,
         )
     )
-    print(result.stringify())
+    # print(result.stringify())
 
     class PeerUser:
         def __init__(self, user_id, distance):
@@ -80,6 +82,38 @@ async def get_located(lat, long):
         )
 
 
+async def get_sent_messages(days: int):
+    me = await client.get_me()
+    print(me.id)
+    ret: dict[int, list[int]] = collections.defaultdict(list)
+    async for dialog in client.iter_dialogs():
+        if dialog.id == me.id or dialog.is_channel:
+            continue
+        print(
+            dialog.name,
+            "has id",
+            dialog.id,
+            f"{dialog.is_user=}",
+            f"{dialog.is_group=}",
+            f"{dialog.is_channel=}",
+        )
+        async for message in client.iter_messages(
+            dialog.id,
+            from_user="me",
+            offset_date=datetime.datetime.now() - datetime.timedelta(days=days),
+        ):
+            ret[dialog.id].append(message.id)
+            print(message.date, message.id, message.from_id, message.text)
+    count = sum(map(lambda x: len(x), ret.values()))
+    print(f"{count=}")
+    return ret
+
+
+async def delete_sent_messages(message_ids: dict[int, list[int]]):
+    for dialog_id in message_ids.keys():
+        await client.delete_messages(dialog_id, message_ids[dialog_id], revoke=True)
+
+
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--print-me", action="store_true")
@@ -87,6 +121,9 @@ async def main():
     parser.add_argument("--send-message", action="store_true")
     parser.add_argument("--delete-messages", action="store_true")
     parser.add_argument("--get-located", action="store_true")
+    parser.add_argument("--get-sent-messages", action="store_true")
+    parser.add_argument("--delete-sent-messages", action="store_true")
+    parser.add_argument("--days", type=int)
     parser.add_argument("--limit", default=None)
     parser.add_argument("--from-user", default=None)
     parser.add_argument("--chat-id", default="me")
@@ -115,6 +152,11 @@ async def main():
         print(f"{args.lat=}")
         print(f"{args.long=}")
         await get_located(args.lat, args.long)
+    elif args.get_sent_messages:
+        ids = await get_sent_messages(args.days)
+    elif args.delete_sent_messages:
+        ids = await get_sent_messages(args.days)
+        await delete_sent_messages(ids)
 
 
 with client:
