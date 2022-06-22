@@ -17,4 +17,6 @@ $ python main.py --get-messages --chat-id=-88005553535 --limit=10
 $ python main.py --send-message --chat-id=me --text=hello
 $ python main.py --delete-messages --chat-id=me --from-user=me --limit=5
 $ python main.py --get-located --lat=55.74618 --long=37.613266
+$ python main.py --get-sent-messages --days=30
+$ python main.py --delete-sent-messages --days=30
 ```
