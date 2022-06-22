@@ -86,6 +86,7 @@ async def get_sent_messages(days: int):
     me = await client.get_me()
     print(me.id)
     ret: dict[int, list[int]] = collections.defaultdict(list)
+    offset_date = (datetime.datetime.now() - datetime.timedelta(days=days)).date()
     async for dialog in client.iter_dialogs():
         if dialog.id == me.id or dialog.is_channel:
             continue
@@ -98,10 +99,10 @@ async def get_sent_messages(days: int):
             f"{dialog.is_channel=}",
         )
         async for message in client.iter_messages(
-            dialog.id,
-            from_user="me",
-            offset_date=datetime.datetime.now() - datetime.timedelta(days=days),
+            dialog.id, from_user="me", offset_date=offset_date
         ):
+            if message.date.date() >= offset_date:
+                continue
             ret[dialog.id].append(message.id)
             print(message.date, message.id, message.from_id, message.text)
     count = sum(map(lambda x: len(x), ret.values()))
