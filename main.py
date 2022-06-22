@@ -1,4 +1,3 @@
-import socks
 import configparser
 import argparse
 import telethon
@@ -10,9 +9,7 @@ API_ID = config["general"]["api_id"]
 API_HASH = config["general"]["api_hash"]
 USERNAME = config["general"]["username"]
 
-TOR_PORT = 9050
-proxy = (socks.SOCKS5, "localhost", TOR_PORT)
-client = telethon.TelegramClient(USERNAME, API_ID, API_HASH, proxy=None)
+client = telethon.TelegramClient(USERNAME, API_ID, API_HASH)
 
 
 async def print_me():
